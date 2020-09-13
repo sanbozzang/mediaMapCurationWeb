@@ -1,5 +1,4 @@
 const HOME = "/";
-
 const MOVIELIST = "/movie/movieListByState";
 
 const routes = {

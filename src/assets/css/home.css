@@ -6,15 +6,29 @@
   right: 0;
 }
 
-info {
+.stateInfo {
   padding: 6px 8px;
   font: 14px/16px Arial, Helvetica, sans-serif;
-  background: #e8c780;
-  background: #e8c780;
+  background: #ffc400ef;
+  background: #ffc400ef;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
 }
-.info h4 {
+
+.stateInfo h4 {
+  margin: 0 0 5px;
+  color: #777;
+}
+
+.movieInfo {
+  font: 14px/16px Arial, Helvetica, sans-serif;
+  background: #ffc400ef;
+  background: #ffc400ef;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+}
+
+.movieInfo h4 {
   margin: 0 0 5px;
   color: #777;
 }

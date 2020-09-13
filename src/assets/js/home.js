@@ -1,6 +1,8 @@
 var jsMap = L.map("jsMap").setView([34.5, 130.5], 6);
 var geojson;
-var info = L.control();
+var stateInfo = L.control();
+var movieInfo = L.control();
+
 const accessToken =
   "pk.eyJ1IjoibmFrZ3VhbiIsImEiOiJja2V3eWN6MGcwcXpwMnJsOWE1Zzl3eXNzIn0.Ijjd7dxJM-Gs5OTBzNphRA";
 
@@ -16,6 +18,7 @@ function getColor(d) {
     "#FED976",
     "#FFEDA0",
   ];
+
   randNum = Math.floor(Math.random() * (colorList.length - 1));
   color = colorList[randNum];
   return color;
@@ -46,13 +49,13 @@ function highlightFeature(e) {
     layer.bringToFront();
   }
 
-  info.update(layer.feature.properties);
+  stateInfo.update(layer.feature.properties);
 }
 
 //mouseout
 function resetHighlight(e) {
   geojson.resetStyle(e.target);
-  info.update();
+  stateInfo.update();
 }
 
 //click
@@ -60,9 +63,13 @@ function zoomToFeature(e) {
   jsMap.fitBounds(e.target.getBounds());
 }
 
-const getMovieListUrl = "/movie/movieListByState";
+function zoomOutFromFeature() {
+  jsMap.setView([34.5, 130.5], 6);
+}
 
+const getMovieListUrl = "/movie/movieListByState";
 const getMovieList = async (e) => {
+  var layer = e.target;
   console.log(e.target.feature.properties);
   response = await axios.get(getMovieListUrl, {
     params: {
@@ -70,7 +77,10 @@ const getMovieList = async (e) => {
     },
   });
 
-  console.log(response.data.movieList);
+  var movieList = response.data.movieList;
+
+  movieInfo.update(layer.feature.properties, movieList);
+  console.log(movieList);
 };
 
 function stateClickHandler(e) {
@@ -87,36 +97,66 @@ function onEachFeature(feature, layer) {
   });
 }
 
-//info control
-
 const mapboxUrl =
   "https://api.mapbox.com/styles/v1/nakguan/ckezuedjp206419pfgdaifmaw/tiles/{z}/{x}/{y}?access_token={accessToken}";
-//"https://api.maptiler.com/maps/voyager/{z}/{x}/{y}.png?key=Ibx5NHRn2Y0gufOihNMV"
-//'<a href="https://carto.com/" target="_blank">&copy; CARTO</a> <a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
 
 L.tileLayer(mapboxUrl, {
   attribution: "",
   accessToken: accessToken,
 }).addTo(jsMap);
 
+//geojson을 통해 지역경계 설정
 geojson = L.geoJson(states, {
   style: style,
   onEachFeature: onEachFeature,
 }).addTo(jsMap);
 
-info.onAdd = function (jsMap) {
-  this._div = L.DomUtil.create("div", "info");
+function closeMovieInfoClick() {
+  movieInfo.update();
+  zoomOutFromFeature();
+}
+
+//1. control
+// 1) stateInfo control
+stateInfo.onAdd = function (jsMap) {
+  this._div = L.DomUtil.create("div", "stateInfo");
   this.update();
   return this._div;
 };
 
 // method that we will use to update the control based on feature properties passed
-info.update = function (props) {
+stateInfo.update = function (props) {
   this._div.innerHTML =
     "<h4>지명</h4>" +
     (props
       ? "<b>" + props.name + "</b>"
-      : "지명 이름을 알고싶으시면 마우스를 올려주세요");
+      : "<b>지명 이름을 알고싶으시면 마우스를 올려주세요</b>");
 };
 
-info.addTo(jsMap);
+// 2)movieInfo
+movieInfo.onAdd = function (jsMap) {
+  this._div = L.DomUtil.create("div", "movieInfo");
+  this.update();
+
+  return this._div;
+};
+
+movieInfo.update = function (props, movieList) {
+  movieInfoHtml = `<h4> ${props ? props.name + "의 영화" : ""}</h4>`;
+  this._div.style.padding = "0px";
+  if (movieList) {
+    for (movie of movieList) {
+      movieInfoHtml = movieInfoHtml + "<b>" + movie + "</b></br>";
+    }
+
+    btnHtml = `<button id = "closeMovieInfoBtn" style = "margin-top: 7px" onClick="closeMovieInfoClick()">닫기</button>`;
+    movieInfoHtml = movieInfoHtml + btnHtml;
+
+    this._div.style.padding = "8px";
+  }
+
+  this._div.innerHTML = movieInfoHtml;
+};
+
+stateInfo.addTo(jsMap);
+movieInfo.addTo(jsMap);
